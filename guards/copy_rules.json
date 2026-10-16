@@ -1,0 +1,38 @@
+{
+  "proof_files": ["vault/proof.md", "vault/projects/*.md"],
+  "banned_phrases": {
+    "please find attached": "stiff opener, say what the file is",
+    "per my last email": "reads as a reprimand",
+    "kindly": "stiff and formal",
+    "i wanted to reach out": "throat-clearing, open with the point",
+    "i'd be happy to": "filler, just do it or say when",
+    "quick one": "throat-clearing, open with the point",
+    "circle back": "corporate filler",
+    "touch base": "corporate filler",
+    "move the needle": "corporate filler",
+    "synergy": "corporate filler",
+    "world-class": "an empty superlative",
+    "best-in-class": "an empty superlative",
+    "cutting-edge": "an empty superlative",
+    "game-changer": "an empty superlative"
+  },
+  "banned_word_families": {
+    "eat": {
+      "forms": ["eat", "eats", "eating", "ate", "eaten"],
+      "why": "figurative 'eats time' is vague, say what it costs plainly"
+    }
+  },
+  "retired_tools": {
+    "legacy scheduler": "switched off, scheduled jobs run on the local cron now",
+    "old crm": "replaced by the vault, naming it is a claim about a stack we no longer run"
+  },
+  "email": {
+    "fail_over_words": 200,
+    "verify_over_words": 150,
+    "fail_over_exclamations": 2
+  },
+  "proposal": {
+    "min_words": 90,
+    "max_words": 160
+  }
+}

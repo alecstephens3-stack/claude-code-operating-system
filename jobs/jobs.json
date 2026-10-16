@@ -1,0 +1,22 @@
+{
+  "jobs": [
+    {
+      "name": "context-budget",
+      "schedule": "0 9 * * 1",
+      "about": "Monday: warn if anything that loads every session is near its limit",
+      "command": ["python3", "guards/check_context_budget.py", "--text"]
+    },
+    {
+      "name": "vault-lint",
+      "schedule": "30 9 * * 1",
+      "about": "Monday: front matter and broken links across the vault",
+      "command": ["python3", "guards/lint_frontmatter.py", "--quiet"]
+    },
+    {
+      "name": "mirror-drift",
+      "schedule": "0 10 * * *",
+      "about": "Daily: say so if the Codex mirror has drifted from the Claude config",
+      "command": ["python3", "guards/sync_codex.py", "--check", "--quiet"]
+    }
+  ]
+}

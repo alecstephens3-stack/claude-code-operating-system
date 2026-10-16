@@ -1,0 +1,11 @@
+Hi there,
+
+Hope your week is going well.
+
+The order review screen is ready. New web orders now show up in your spreadsheet already filled in, and nothing ships until you tick it. In the first month that took order entry from 25 minutes to 6 minutes per order.
+
+The big one was the notes field: long customer notes were spilling into the next row. That's fixed, so each order stays on one line.
+
+When you have a minute, try it on today's orders and tell me if anything looks off.
+
+Thanks!

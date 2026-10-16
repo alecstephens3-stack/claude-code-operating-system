@@ -1,0 +1,21 @@
+{
+  "always_deny": [
+    "mcp__gmail__send_message",
+    "mcp__gmail__reply",
+    "mcp__slack__send_message",
+    "Bash(git push*)",
+    "Bash(rm -rf*)"
+  ],
+  "operators": {
+    "outbound": {
+      "repo": "~/dev/outbound-operator",
+      "owns": "lead sourcing, enrichment, openers, campaign drafts, reply triage",
+      "deny": ["Bash(*launch_campaign*)", "Bash(*delete_leads*)"]
+    },
+    "media": {
+      "repo": "~/dev/media-operator",
+      "owns": "video clips, captions, thumbnails",
+      "deny": ["Bash(*publish*)"]
+    }
+  }
+}

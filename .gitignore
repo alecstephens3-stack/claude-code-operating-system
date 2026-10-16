@@ -1,0 +1,10 @@
+.env
+.env.*
+__pycache__/
+.pytest_cache/
+.venv/
+venv/
+jobs/runs.log
+AGENTS.override.md
+CLAUDE.local.md
+.claude/settings.local.json

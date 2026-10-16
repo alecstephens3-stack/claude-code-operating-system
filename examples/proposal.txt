@@ -1,0 +1,7 @@
+Your team is retyping every web order into a spreadsheet by hand, and the typos turn into wrong shipments and refunds. That is a problem with a known shape, and it usually does not need new software.
+
+We would start from the form and the spreadsheet you already pay for. A small script reads each order email and fills in a row. Plain rules copy the fields that never change, the model only reads free-text notes, and a person on your team approves every order before it moves to shipping.
+
+For a shop we built this for, order entry went from 25 minutes to 6 minutes per order, and the owner got about 8 hours a week back.
+
+Would a short call this week or next work better for you?

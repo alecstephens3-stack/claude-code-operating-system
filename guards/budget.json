@@ -1,0 +1,42 @@
+{
+  "warn_at": 0.8,
+  "layers": [
+    {
+      "name": "main instructions",
+      "path": "CLAUDE.md",
+      "limit": 40000,
+      "unit": "bytes",
+      "why": "Claude Code flags a CLAUDE.md this large, and every byte loads in every session",
+      "fix": "move detail into files the assistant reads on demand"
+    },
+    {
+      "name": "memory index",
+      "path": "~/.claude/projects/{project_key}/memory/MEMORY.md",
+      "limit": 200,
+      "unit": "lines",
+      "why": "the loader reads the index up to a line limit and drops the rest without saying so",
+      "fix": "move dormant entries to a sub-index, merge duplicates, shorten each line"
+    },
+    {
+      "name": "priorities",
+      "path": "vault/priorities.md",
+      "limit": 30000,
+      "unit": "bytes",
+      "why": "our own budget: no loader limit, but a long file crowds out everything else",
+      "fix": "do the weekly reset: live items only, move the rest to vault/archives/"
+    },
+    {
+      "name": "Codex mirror",
+      "path": "AGENTS.md",
+      "limit": 32768,
+      "unit": "bytes",
+      "why": "Codex reads AGENTS.md up to project_doc_max_bytes and drops the tail",
+      "fix": "shrink the Claude-side sources, the mirror is generated"
+    }
+  ],
+  "reset": {
+    "path": "vault/priorities.md",
+    "pattern": "Last reset: (\\d{4}-\\d{2}-\\d{2})",
+    "max_age_days": 7
+  }
+}

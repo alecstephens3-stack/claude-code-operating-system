@@ -1,0 +1,15 @@
+{
+  "required": ["type", "title", "summary", "status", "tags", "last-updated"],
+  "types": {
+    "project": ["client"],
+    "research": ["date", "topic"],
+    "decision": ["date", "area"],
+    "reference": [],
+    "meta": [],
+    "log": []
+  },
+  "statuses": ["active", "draft", "parked", "shipped", "reference", "archived"],
+  "date_fields": ["last-updated", "date"],
+  "stale_after_days": 90,
+  "skip_dirs": ["archives", "raw", "node_modules"]
+}
