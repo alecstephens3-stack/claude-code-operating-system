@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{TITLE}}</title>
+<!-- DS:KIT checklist -->
+<style>
+  :root { --ds-ink: #1d1a17; --ds-muted: #6b645c; --ds-accent: #c55532; --ds-ground: #f6f3ee; --ds-card: #ffffff; }
+  @media (prefers-color-scheme: dark) {
+    :root { --ds-ink: #efe9e1; --ds-muted: #a39a90; --ds-ground: #171412; --ds-card: #221e1b; }
+  }
+  body { margin: 0; background: var(--ds-ground); color: var(--ds-ink); font: 16px/1.5 system-ui, sans-serif; }
+  .ds-page { max-width: 640px; margin: 0 auto; padding: 32px 16px 64px; }
+  .ds-page h1 { font-size: 24px; margin: 0 0 4px; }
+  .ds-meta { color: var(--ds-muted); font-size: 14px; margin: 0 0 16px; }
+  .ds-list { list-style: none; padding: 0; margin: 24px 0 0; }
+  .ds-step { background: var(--ds-card); border-radius: 10px; padding: 14px 16px; margin-bottom: 10px; }
+  .ds-step label { display: flex; gap: 12px; align-items: flex-start; cursor: pointer; }
+  .ds-step input[type=checkbox] { width: 20px; height: 20px; margin-top: 2px; accent-color: var(--ds-accent); }
+  .ds-step.done .ds-text { color: var(--ds-muted); text-decoration: line-through; }
+  .ds-detail { color: var(--ds-muted); font-size: 14px; margin: 6px 0 0 32px; }
+  .ds-copy { display: flex; gap: 8px; margin: 8px 0 0 32px; }
+  .ds-copy code { flex: 1; background: var(--ds-ground); border-radius: 6px; padding: 6px 8px; overflow-wrap: anywhere; }
+  .ds-copy button { border: 0; border-radius: 6px; padding: 6px 12px; background: var(--ds-accent); color: #fff; cursor: pointer; }
+</style>
+</head>
+<body>
+<main class="ds-page">
+  <h1>{{TITLE}}</h1>
+  <p class="ds-meta">Made {{CREATED}}. Ticks are saved in this browser.</p>
+  <p>{{INTRO}}</p>
+  <ol class="ds-list">
+{{ITEMS}}
+  </ol>
+</main>
+<script>
+  const key = "checklist:{{CHECKLIST_ID}}";
+  let saved = {};
+  try { saved = JSON.parse(localStorage.getItem(key) || "{}"); } catch (e) {}
+  document.querySelectorAll(".ds-step").forEach(li => {
+    const box = li.querySelector("input");
+    box.checked = !!saved[li.dataset.id];
+    li.classList.toggle("done", box.checked);
+    box.addEventListener("change", () => {
+      saved[li.dataset.id] = box.checked;
+      li.classList.toggle("done", box.checked);
+      try { localStorage.setItem(key, JSON.stringify(saved)); } catch (e) {}
+    });
+  });
+  document.querySelectorAll(".ds-copy button").forEach(b => b.addEventListener("click", () => {
+    navigator.clipboard.writeText(b.previousElementSibling.textContent);
+    b.textContent = "Copied";
+    setTimeout(() => { b.textContent = "Copy"; }, 1200);
+  }));
+</script>
+</body>
+</html>

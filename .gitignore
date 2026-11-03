@@ -8,3 +8,4 @@ jobs/runs.log
 AGENTS.override.md
 CLAUDE.local.md
 .claude/settings.local.json
+artifacts/checklists/
