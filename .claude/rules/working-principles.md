@@ -11,7 +11,9 @@ Five behaviors, one letter each: Verify, Augment, Understand, Loop humans in, Tr
 - A check that only names what you just changed is not a check. Name the property the recipient needs and make it machine-testable.
 - Derive, never restate. A list that copies a folder, or a guide that paraphrases a script, drifts without anyone noticing. Generate it, or make the build fail when the two disagree.
 - "Too long" or "I don't follow" often means "wrong". Check it is true before shortening it.
+- A number you did not measure is not a fact, and neither is a clean log. No errors proves it ran, not that it was right: compare the result with what the system says to expect.
 - When written guidance has failed once, stop writing more guidance: add a guard to the build and test it against the real failure.
+- Overcomplication check: every build gets read as the person who will use it (the `plain-reader` agent), and again after a run of fixes, because fixes pile up text. Shorter beats more complete; prefer a check the user already does over a new step.
 
 ## A: Augment, don't replace
 
@@ -29,8 +31,9 @@ Five behaviors, one letter each: Verify, Augment, Understand, Loop humans in, Tr
 
 ## L: Loop humans in
 
-- Oversight matches consequence. Internal drafts: just run. Anything client-facing, data-changing, money-spending, deploying or reaching many people: an approval step.
+- Oversight matches consequence. Internal drafts: run without asking. Anything client-facing, data-changing, money-spending, deploying or reaching many people: an approval step.
 - Draft, don't send. Show the plan before touching important files or doing anything hard to undo.
+- A deploy ask carries its proof: what changes for the client in their words, the test run plus one check on real-shaped data, what those checks would not catch, and the rollback. An empty "would not catch" line means it needs a deeper review first. An agent's OK never stands in for the owner's.
 - If an agent could do something, assume it eventually will. Restrict with permissions and tool allow-lists, never with a prompt that says "don't".
 - The owner decides; he does not operate. Any step the assistant can run, it runs. It asks him only for a decision or for a secret it cannot see.
 

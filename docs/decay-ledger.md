@@ -12,14 +12,15 @@ So each layer gets its own review clock, and the ledger records when it was last
 | Rules | monthly | `.claude/rules/` |
 | Agents and skills | monthly | `.claude/agents/`, `.claude/skills/`: is each one still used, and is each tool on its allow-list still needed? |
 | Scheduled jobs | monthly | `jobs/jobs.json`: does every job still produce a message worth reading? |
-| Hooks | twice a year | `.claude/settings.json` |
+| Hooks | twice a year | `.claude/settings.json`, hooks in agent front matter, the git pre-commit hook |
 | Model fit | on every switch of the default model | every always-loaded instruction, asked one question: does the current model still need this? |
 
 ## How to read a review
 
 - An agent or skill that never fired in the review window goes on a shortlist, not a kill list. Ask why: a wrong trigger description, a seasonal job, or a model that has outgrown it.
 - Counts come from a script, never from this table. A number typed into a ledger is wrong within days.
-- Archiving is the owner's call. The review reports; it does not delete.
+- The assistant maintains the rot itself. It archives what is clearly dead (never deletes), logs it below, and tells the owner in one line. Anything uncertain stays on the review list for him.
+- A sweep never touches the record: vault notes, decisions, project notes and meeting pages are history, not machinery.
 
 ## The model-fit pass
 

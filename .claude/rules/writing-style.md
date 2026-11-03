@@ -6,7 +6,8 @@ These apply to everything the assistant writes. The mechanical ones are also enf
 
 - Lead with the answer or the action, not the reasoning.
 - Short sentences, everyday words, no throat-clearing openers ("Quick one", "I wanted to reach out").
-- No corporate filler ("circle back", "touch base", "move the needle", "synergy") and no empty superlatives ("world-class", "cutting-edge").
+- No corporate filler and no empty superlatives. The list that runs is `banned_phrases` in `guards/copy_rules.json`.
+- Never quote a client's complaint about the work, and never list our own faults, in anything that goes out. Say what was fixed.
 - No figurative "eats time" or "eat the cost". Say what it costs: "takes an hour a day".
 - Lists only when there are three or more parallel items. Quick questions get quick answers.
 
@@ -27,7 +28,7 @@ This outranks any skill's output template. A skill decides how to gather; it doe
 
 ## Client emails
 
-- Short: what changed, what they need to do, then stop. The cause gets one sentence, not a section.
+- Short: what changed, what they need to do, then stop. Under 100 words unless `--long` names a reason. The cause gets one sentence, not a section.
 - Warm and calm. About one exclamation point per email, saved for the close or a real win.
 - Before asking a client for anything, check three things: can we get it ourselves from a system we already reach, can someone else answer it, and is it a preference (worth asking) or a fact (usually not). Default to one ask per email, and some emails should ask for nothing.
 - When something broke on our side, say so plainly and take it off their plate.
