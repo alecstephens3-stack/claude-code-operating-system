@@ -49,7 +49,7 @@ def test_codex_mirror_is_current():
     ("examples/proposal.txt", "proposal", 0),
 ])
 def test_example_drafts(draft, profile, code):
-    r = guard("guards/copy_check.py", draft, "--profile", profile)
+    r = guard("guards/copy_check.py", draft, "--profile", profile, "--offline")
     assert r.returncode == code, r.stdout
 
 

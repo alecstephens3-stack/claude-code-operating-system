@@ -6,8 +6,8 @@ RULES = cc.load_rules()
 PROOF = "Order entry went from 25 minutes to 6 minutes. About 8 hours a week. Errors fell 40%."
 
 
-def run(text, profile="artifact", corpus=PROOF):
-    return cc.check(text, profile, RULES, corpus)
+def run(text, profile="artifact", corpus=PROOF, **kw):
+    return cc.check(text, profile, RULES, corpus, **kw)
 
 
 def codes(lines):
@@ -106,3 +106,82 @@ def test_main_reads_proof_files_from_root(tmp_path, capsys):
     draft.write_text("Hi there,\n\nThat is 8 hours a week back.\n\nThanks\n")
     assert cc.main([str(draft), "--profile", "email", "--root", str(tmp_path)]) == 0
     assert "proof from 1 file(s)" in capsys.readouterr().out
+
+
+def test_email_over_the_limit_needs_a_written_reason():
+    long = "Hi there,\n\n" + "word " * 120 + "\n\nThanks\n"
+    hard, _ = run(long, "email")
+    assert any("LENGTH" in h and "--long" in h for h in hard)
+    hard, verify = run(long, "email", long_reason="first-week setup steps")
+    assert not any("LENGTH" in h for h in hard)
+    assert any("allowed because: first-week setup steps" in v for v in verify)
+
+
+def test_profile_is_required(capsys):
+    with pytest.raises(SystemExit):
+        cc.main(["examples/good-email.txt"])
+
+
+@pytest.mark.parametrize("kind, n, ok", [
+    ("cold", 120, True), ("cold", 180, False), ("invited", 180, True), ("detailed", 250, True),
+])
+def test_proposal_word_range_follows_the_type(kind, n, ok):
+    body = "Your orders are retyped by hand. " + "plain " * (n - 10) + "Would Tuesday or Wednesday suit?"
+    hard, _ = run(body, "proposal", kind=kind)
+    assert (not any("LENGTH" in h for h in hard)) == ok
+
+
+def test_screening_answer_skips_opening_and_close_rules():
+    answer = "I have built order intake on a shared spreadsheet for a small shop, and the owner reviews every row."
+    assert run(answer, "proposal", kind="screening") == ([], [])
+
+
+def test_unknown_proposal_type_fails():
+    assert "TYPE" in codes(run("Anything?", "proposal", kind="essay")[0])
+
+
+@pytest.mark.parametrize("snippet", ["Write to me at owner@example.com.", "Book on calendly.com/owner."])
+def test_contact_details_fail_in_a_proposal(snippet):
+    assert "CONTACT" in codes(run(proposal(f"Your orders are retyped. {snippet}"), "proposal")[0])
+
+
+def test_open_ended_close_is_verify():
+    text = proposal("Your orders are retyped.").replace("Would next week work?", "What does your week look like?")
+    hard, verify = run(text, "proposal")
+    assert hard == [] and any("CLOSE" in v for v in verify)
+
+
+def test_never_quote_a_complaint_or_list_our_faults():
+    assert "BANNED" in codes(run("The office said it had stopped helping.")[0])
+    assert "BANNED" in codes(run("Those were our three faults.")[0])
+
+
+def test_discouraged_tool_is_verify():
+    hard, verify = run("You could wire this with Zapier.")
+    assert hard == [] and any("TOOL" in v for v in verify)
+
+
+def test_trailing_punctuation_on_a_link_fails_offline():
+    hard, _ = cc.link_checks(cc.find_links("The guide is at https://example.com/guide."))
+    assert any("ends in '.'" in h for h in hard)
+    assert cc.link_checks(cc.find_links("The guide:\nhttps://example.com/guide\n")) == ([], [])
+
+
+def test_dead_link_and_broken_image_fail():
+    def fetch(url):
+        if "dead" in url:
+            raise OSError("404 Not Found")
+        return url, "text/html", b'<img src="/ok.png"><img src="/gone.png"><img src="data:x">'
+
+    def head(url):
+        return 404 if "gone" in url else 200
+
+    links = cc.find_links("https://example.com/dead\nhttps://example.com/page\n")
+    hard, _ = cc.link_checks(links, fetch, head)
+    assert any("dead does not open" in h for h in hard)
+    assert any("1 image(s) do not load" in h and "gone.png" in h for h in hard)
+
+
+def test_href_targets_are_found_in_pages():
+    raw = '<a href="https://example.com/a">a</a> <p>see https://example.com/b</p>'
+    assert cc.find_links(cc.strip_html(raw), raw) == ["https://example.com/b", "https://example.com/a"]
