@@ -4,6 +4,18 @@
 description = "Adversarial critic. Use proactively when a plan, price, scope, proposal or decision should be stress-tested before it ships. It does not agree to be agreeable. Triggers on \"poke holes in this\", \"play devil's advocate\", \"what could go wrong\", or \"review my plan for flaws\"."
 config_file = "agents/adversarial-reviewer.toml"
 
+[agents.ledger-reader]
+description = "Answers questions about the business's own money from the bookkeeping export, read-only, in chat only. Use when the owner asks \"did the invoice get paid\", \"what came in this month\", \"what is the balance\", or anything about the books. Not for sending invoices or changing records."
+config_file = "agents/ledger-reader.toml"
+
+[agents.meeting-notes]
+description = "Turns a recorded call into vault updates. Use after a client call or an important meeting, or when the owner says \"process the call\" or \"update from the meeting\". Pulls the transcript from the meeting recorder, extracts tasks, decisions, blockers and waiting-fors, updates the project note, and writes one meeting page."
+config_file = "agents/meeting-notes.toml"
+
+[agents.owner-reviewer]
+description = "Reviews copy aimed at the owner of a small independent clinic (cold emails, site sections, proposals, call prep) as a skeptical owner and office manager would read it. Returns line-by-line feedback and rewrites. Use before anything a clinic owner will read goes out."
+config_file = "agents/owner-reviewer.toml"
+
 [agents.plain-reader]
 description = "Reads a finished build, guide, page or email as the real person who will use it and reports what would overwhelm or confuse them. Use before anything client-facing ships, and after a run of fixes has piled on text. Triggers on \"overcomplication check\", \"read this as the client\", or \"is this too much\"."
 config_file = "agents/plain-reader.toml"

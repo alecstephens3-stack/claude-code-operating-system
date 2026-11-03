@@ -105,10 +105,16 @@ def compose_agents_md(root: Path) -> str:
     return "".join(parts)
 
 
-def restrictions(fm: dict) -> list[str]:
+def restrictions(fm: dict, hooked: bool = False) -> list[str]:
     tools = {t.strip().lower() for t in fm.get("tools", "").split(",") if t.strip()}
     lines = ["# least privilege, carried over from the Claude agent's tools list"]
     if tools and not tools & WRITE_TOOLS:
+        lines.append('sandbox_mode = "read-only"')
+    elif hooked:
+        # Codex runs no Claude hooks, so the command guard does not come across.
+        # The closest wall it has is a read-only sandbox: the agent can still run
+        # its read commands but cannot write a file or reach the network.
+        lines.append("# the Claude agent's PreToolUse hook does not carry over to Codex")
         lines.append('sandbox_mode = "read-only"')
     else:
         lines.append("# sandbox: inherits the session default (the Claude agent can write)")
@@ -125,7 +131,9 @@ def sync_agents(s: Sync) -> None:
         agent_file = agent_dir / "agent.md"
         if not agent_file.exists():
             continue
-        fm, body = parse_frontmatter(agent_file.read_text(encoding="utf-8"))
+        raw = agent_file.read_text(encoding="utf-8")
+        fm, body = parse_frontmatter(raw)
+        hooked = "PreToolUse" in raw[:raw.find("\n---\n", 4)]
         name = agent_dir.name
         names[name] = fm.get("description", "")
         s.write(f".codex/agents/{name}.toml", "\n".join([
@@ -135,7 +143,7 @@ def sync_agents(s: Sync) -> None:
             f"description = {toml_str(fm.get('description', ''))}",
             'model_reasoning_effort = "medium"',
             "",
-            *restrictions(fm),
+            *restrictions(fm, hooked),
             "",
             f"developer_instructions = {toml_block(subs(body.strip()))}",
             "",

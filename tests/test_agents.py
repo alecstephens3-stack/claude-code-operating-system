@@ -59,3 +59,40 @@ def test_design_system_hook_is_wired():
     hooks = json.loads((ROOT / ".claude" / "settings.json").read_text())["hooks"]["PostToolUse"]
     commands = [h["command"] for group in hooks for h in group["hooks"]]
     assert any("check_design_system.py" in c for c in commands)
+
+
+ALLOWED_MODELS = {"opus", "sonnet"}
+
+
+@pytest.mark.parametrize("agent_dir", AGENTS, ids=lambda p: p.name)
+def test_agent_pins_a_model_at_or_above_the_floor(agent_dir):
+    fm, _ = front(agent_dir)
+    assert fm.get("model") in ALLOWED_MODELS, "the smallest model missed too much in review work"
+
+
+@pytest.mark.parametrize("agent_dir", AGENTS, ids=lambda p: p.name)
+def test_mcp_grants_name_single_tools(agent_dir):
+    fm, _ = front(agent_dir)
+    for tool in (t.strip() for t in fm["tools"].split(",")):
+        if tool.startswith("mcp__"):
+            assert tool.count("__") == 2 and not tool.endswith("*"), f"{tool} grants a whole server"
+
+
+COMMANDS = json.loads((ROOT / "guards" / "agent_commands.json").read_text())
+
+
+@pytest.mark.parametrize("agent_dir", AGENTS, ids=lambda p: p.name)
+def test_any_agent_with_bash_is_held_by_a_command_guard(agent_dir):
+    fm, _ = front(agent_dir)
+    tools = {t.strip() for t in fm["tools"].split(",")}
+    if "Bash" not in tools:
+        return
+    raw = (agent_dir / "agent.md").read_text()
+    head = raw[:raw.find("\n---\n", 4)]
+    assert "PreToolUse" in head and f"guard_agent_bash.py\\\" {agent_dir.name}" in head
+    assert agent_dir.name in COMMANDS, "the guard needs an allow-list entry for this agent"
+
+
+def test_hooked_agent_is_read_only_on_the_codex_side():
+    toml = (ROOT / ".codex" / "agents" / "ledger-reader.toml").read_text()
+    assert 'sandbox_mode = "read-only"' in toml
