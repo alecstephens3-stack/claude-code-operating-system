@@ -29,3 +29,9 @@ When the default model changes, read every always-loaded instruction and split i
 - **Cut:** procedures the model now works out alone. Move them to an archive folder, verbatim, so they can come back if the cut was wrong.
 
 Shorter instructions load faster, cost less, and leave room for the rules that matter.
+
+## Review log
+
+`guards/check_context_budget.py` reads the newest date below and warns once it is more than 35 days old.
+
+- **2026-11-03** Ported the new guards from the private system (hook guards, the trim check, link checks in copy_check). No agent or skill was retired in this review.

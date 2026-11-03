@@ -69,3 +69,34 @@ def test_main_with_config_file(root, tmp_path, capsys):
     cfg.write_text(json.dumps(config()))
     assert cb.main(["--config", str(cfg), "--root", str(root), "--today", "2026-10-17"]) == 0
     assert "priorities last reset: 5 days ago" in capsys.readouterr().out
+
+
+def test_memory_index_dead_links_and_orphans(root):
+    mem = root / "mem"
+    mem.mkdir()
+    (mem / "MEMORY.md").write_text("- [rule](rule.md)\n- [gone](gone.md)\n- [more](tools-index.md)\n")
+    (mem / "rule.md").write_text("x")
+    (mem / "tools-index.md").write_text("- [tool](tool.md)\n")
+    (mem / "tool.md").write_text("x")
+    (mem / "forgotten.md").write_text("x")
+    cfg = config(memory_index={"path": "mem/MEMORY.md"})
+    problems = cb.memory_problems(cfg, root)
+    assert problems == ["the index links to a missing file: gone.md",
+                        "a memory file no index links to, so it never loads: forgotten.md"]
+    assert "2 memory notes" in cb.report(cfg, root, "text", TODAY)
+
+
+def test_long_bullets_are_flagged(root):
+    (root / "prio.md").write_text("Last reset: 2026-10-12\n- short\n- " + "history " * 100 + "\n")
+    cfg = config(long_bullets={"path": "prio.md", "max_chars": 600})
+    assert len(cb.long_bullets(cfg, root)) == 1
+    assert "bullet over 600" in cb.report(cfg, root, "session", TODAY)
+
+
+def test_review_clock(root):
+    (root / "ledger.md").write_text("## Review log\n- **2026-09-01** rules and agents reviewed\n")
+    cfg = config(review_log={"path": "ledger.md", "pattern": r"^- \*\*(\d{4}-\d{2}-\d{2})", "max_age_days": 35})
+    assert cb.review_age(cfg, root, TODAY) == 46
+    assert "decay ledger review is 46 days old" in cb.report(cfg, root, "text", TODAY)
+    (root / "ledger.md").write_text("## Review log\n- **2026-10-10** reviewed\n")
+    assert cb.report(cfg, root, "text", TODAY) == ""

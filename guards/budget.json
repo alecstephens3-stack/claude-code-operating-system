@@ -38,5 +38,18 @@
     "path": "vault/priorities.md",
     "pattern": "Last reset: (\\d{4}-\\d{2}-\\d{2})",
     "max_age_days": 7
+  },
+  "memory_index": {
+    "path": "~/.claude/projects/{project_key}/memory/MEMORY.md",
+    "sub_index_suffix": "-index.md"
+  },
+  "long_bullets": {
+    "path": "vault/priorities.md",
+    "max_chars": 600
+  },
+  "review_log": {
+    "path": "docs/decay-ledger.md",
+    "pattern": "^- \\*\\*(\\d{4}-\\d{2}-\\d{2})",
+    "max_age_days": 35
   }
 }
