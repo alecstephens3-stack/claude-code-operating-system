@@ -2,7 +2,7 @@
 
 I run a small AI consultancy, and most of the day-to-day work goes through Claude Code: client notes, delivery, the books, drafts of everything that gets sent. This repo is the machinery from that setup with the business taken out. It has the agents and their permissions, the rules, the guard scripts with their tests, and a tiny fictional vault (Example Co., Northside Dental) to run them against. There is no client data in it.
 
-Most of what's here exists because something went wrong once. A memory file grew past the loader's line limit and the oldest rules stopped loading for nine days. A draft went out with a link that had a full stop glued to the end. A session claimed it had used the design system and had not opened a single file from it. Longer instructions did not hold, so the fix was usually a script that fails loudly and a test built from the original failure.
+Each guard here is tied to a specific failure and has a test built from it. For example, a memory file grew past the loader's line limit and its oldest rules stopped loading. The fix in each case was a script that fails loudly plus a regression test.
 
 ## How it fits together
 
@@ -38,19 +38,11 @@ flowchart TD
     cron[Local cron] --> runjob[jobs/run_job.py] --> phone([Message to the owner<br/>only when output is non-empty])
 ```
 
-Operators draft. Sending, publishing, pushing and deleting are denied on the hand-off channel, so the owner is the one who activates anything that goes out.
+Operators only draft: sending, publishing, pushing and deleting are denied on the hand-off channel, so the owner activates anything that goes out.
 
 ## Principles
 
-I group the working rules under VAULT, an acronym I took from a public video by Nate Herk. The full text is in `.claude/rules/working-principles.md`.
-
-- Verify the output. A tidy answer is a draft until the parts that matter are checked, and a clean log only proves the thing ran.
-- Augment, don't replace. Known steps go to plain code; the model gets the messy input and the judgment calls.
-- Understand the why. One line before any build: the problem, and what a good result looks like.
-- Loop humans in. Drafts run freely. Anything that sends, spends, deploys or changes shared data waits for a yes.
-- Transparency. Every automation says what triggers it, what it reads, and where a person approves.
-
-The one I lean on most: restrict an agent with permissions, never with a prompt that says "don't". If an agent could do something, I assume it eventually will.
+One rule I hold to: restrict an agent with permissions, never with a prompt that says "don't". If an agent could do something, I assume it eventually will. The rest of the working rules are in `.claude/rules/working-principles.md`.
 
 ## Agents
 
@@ -68,20 +60,20 @@ Each agent lives in `.claude/agents/<name>/agent.md` with its tool list in front
 
 Front matter can grant Bash or withhold it, with nothing in between. The ledger-reader is how I got the in-between: Bash plus `guards/guard_agent_bash.py` wired as a hook in the agent's own file. Codex can't run Claude hooks, so `sync_codex.py` gives that agent a read-only sandbox on the Codex side instead.
 
-Skills in `.claude/skills/`: `weekly-reset`, `call-topics`, `client-update`, `proposal`, `session-handoff`. The last one checks who is reading before it uses its template. I added that line after it handed me a wall of shell ids when I'd asked for a summary for myself.
+Skills in `.claude/skills/`: `weekly-reset`, `call-topics`, `client-update`, `proposal`, `session-handoff`. The last one checks who is reading before it picks a template.
 
 ## Guards
 
-Everything below runs on the standard library. The failure column is what happened before the guard existed.
+Everything below runs on the standard library.
 
-| Script | The failure it was written after |
+| Script | What it catches |
 |---|---|
-| `guards/copy_check.py` | Drafts going out with banned phrases, em dashes, a number nobody measured, a link with trailing punctuation, or a 148-word reply to a two-line question. It also fails contact details in marketplace proposals, and `--profile` is required because a missing flag once ran a video description through the proposal rules |
+| `guards/copy_check.py` | Banned phrases, em dashes, numbers with no source in the proof file, links with trailing punctuation, over-length emails, and contact details in marketplace proposals. `--profile` is required so a draft can't be checked against the wrong rules |
 | `guards/check_context_budget.py` | The memory index passed its line limit and the tail stopped loading. It now also flags memory files no index links to, priorities bullets that have turned into diaries, and an overdue decay ledger review |
 | `guards/priorities_trim_check.py` | A weekly trim dropped four open items along with the history. It lists ticket ids, file pointers, emails, amounts and links that only the archive copy still has |
 | `guards/check_design_system.py` | A page claimed the design system and carried none of it, then a private page opted itself out with a reason it wrote for itself. Opt-outs now have to name a category from a fixed list |
-| `guards/guard_agent_bash.py` | Nothing yet, and I want to keep it that way: an agent that reads the books could otherwise copy them anywhere its shell reaches |
-| `guards/guard_secret_commit.py` | Covers the paths `.env` deny rules don't: a key pasted into a note, a balance printed into a log. On its first run it blocked my own commit, because its docstring held a sample account line |
+| `guards/guard_agent_bash.py` | Stops an agent that reads the books from copying them anywhere its shell can reach |
+| `guards/guard_secret_commit.py` | Covers what `.env` deny rules miss: a key pasted into a note, a balance printed into a log |
 | `guards/lint_frontmatter.py`, `build_home.py` | Notes falling off the home page, and a hand-kept index drifting |
 | `guards/sync_codex.py` | Claude Code and Codex reading two copies of the instructions that disagreed within a week |
 
