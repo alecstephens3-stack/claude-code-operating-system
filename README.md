@@ -119,7 +119,7 @@ The suite also runs the repo against its own guards: no em dashes anywhere, a cl
 - `guard_agent_bash.py` matches whole command strings. It's strict on purpose, which means every new read command needs a new pattern in `agent_commands.json`.
 - The design system guard only judges new files. Pages already committed are left alone, otherwise every edit to an old page would turn into a migration and the guard would get switched off.
 - The operators' own repos (outbound and media) aren't here, only the hand-off side.
-- How Charlie writes in chat lives in a separate mod, [claude-code-voice-mod](https://github.com/alecstephens3-stack/claude-code-voice-mod).
+- How the main assistant writes in chat lives in a separate Claude Code mod, [claude-code-voice-mod](https://github.com/alecstephens3-stack/claude-code-voice-mod).
 
 ## License
 
