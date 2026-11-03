@@ -53,3 +53,9 @@ def test_settings_deny_secrets_and_force_push():
     deny = json.loads((ROOT / ".claude" / "settings.json").read_text())["permissions"]["deny"]
     assert "Read(./.env)" in deny
     assert any("push --force" in d for d in deny)
+
+
+def test_design_system_hook_is_wired():
+    hooks = json.loads((ROOT / ".claude" / "settings.json").read_text())["hooks"]["PostToolUse"]
+    commands = [h["command"] for group in hooks for h in group["hooks"]]
+    assert any("check_design_system.py" in c for c in commands)

@@ -30,6 +30,16 @@
             "statusMessage": "Syncing the Codex mirror"
           }
         ]
+      },
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/guards/check_design_system.py\"",
+            "statusMessage": "Checking the page is on the design system"
+          }
+        ]
       }
     ]
   }

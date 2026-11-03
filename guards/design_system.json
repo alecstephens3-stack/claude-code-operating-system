@@ -1,0 +1,21 @@
+{
+  "fingerprint": "DS:KIT|--ds-[a-z0-9-]+|class=\"[^\"]*\\bds-|\\.ds-[a-z0-9-]+",
+  "retired": [
+    {"pattern": "#E35F4D", "why": "the old accent #E35F4D, which only the retired v1 system used"},
+    {"pattern": "--ds-paper\\s*:\\s*#FFFFFF", "why": "the v1 flat paper token; the current system has no flat white ground"}
+  ],
+  "opt_out_categories": {
+    "client-brand": "the page wears a client's own look",
+    "product": "an app or game with its own visual world",
+    "harness": "a test or dev page nobody reads as a document",
+    "v1-archive": "the page documents the retired v1 system",
+    "owner-approved": "the owner said so in this session; write the date after it"
+  },
+  "logo": {
+    "mark_class": "class=\"mark\"",
+    "canonical_signature": "M12 3L21 21",
+    "known_fakes": ["M23 9.5C"]
+  },
+  "skip_dirs": ["node_modules", ".next", "dist", ".vercel", "venv", ".venv", "site-packages", ".git"],
+  "exempt_paths": ["vault/legal/"]
+}

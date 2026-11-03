@@ -1,0 +1,7 @@
+date,account,payee,amount,memo
+2026-10-01,Operating,Northside Dental,3200.00,setup invoice 1001
+2026-10-03,Operating,Model API credits,-12.00,usage
+2026-10-05,Operating,Hosting,-6.00,monthly
+2026-10-15,Operating,Example Co.,250.00,monthly support invoice 1002
+2026-10-20,Tax reserve,Transfer from Operating,1200.00,quarterly set-aside
+2026-10-20,Operating,Transfer to Tax reserve,-1200.00,quarterly set-aside
