@@ -2,7 +2,7 @@
 
 I run a small AI consultancy, and most of the day-to-day work goes through Claude Code: client notes, delivery, the books, drafts of everything that gets sent. This repo is the machinery from that setup with the business taken out. It has the agents and their permissions, the rules, the guard scripts with their tests, and a tiny fictional vault (Example Co., Northside Dental) to run them against. There is no client data in it.
 
-Most of what's here exists because something went wrong once. A memory file grew past the loader's line limit and the oldest rules stopped loading for nine days. A draft went out with a link that had a full stop glued to the end. A session claimed it had used the design system and had not opened a single file from it. Each time the fix was a script that fails loudly, plus a test that replays the original failure. Longer instructions did not hold.
+Most of what's here exists because something went wrong once. A memory file grew past the loader's line limit and the oldest rules stopped loading for nine days. A draft went out with a link that had a full stop glued to the end. A session claimed it had used the design system and had not opened a single file from it. Longer instructions did not hold, so the fix was usually a script that fails loudly and a test built from the original failure.
 
 ## How it fits together
 
