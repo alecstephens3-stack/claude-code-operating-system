@@ -1,146 +1,125 @@
 # Claude Code Operating System
 
-The machinery behind an AI operating system that a small AI consultancy runs its day-to-day work on, built on Claude Code. One main assistant handles clients, delivery, finances and strategy from a markdown vault. Separate operator projects handle outbound sales and media. Scheduled jobs watch the system and send a message only when something needs attention. Guard scripts check the things a model gets wrong when nobody is looking.
+I run a small AI consultancy, and most of the day-to-day work goes through Claude Code: client notes, delivery, the books, drafts of everything that gets sent. This repo is the machinery from that setup with the business taken out. It has the agents and their permissions, the rules, the guard scripts with their tests, and a tiny fictional vault (Example Co., Northside Dental) to run them against. There is no client data in it.
 
-This repo is a clean, generic extract of the private setup: the structure, the agents, the rules and the guards, with a tiny fictional vault (a made-up client, Example Co.) to run them against. It contains no client data.
-
-## The problem
-
-Running a business through an AI assistant works well for a week. Then the failures start, and none of them throws an error:
-
-- **Context fills up without warning.** The instructions and memory that load every session grow until the loader cuts the tail, and the tail holds the oldest, hardest-won rules.
-- **Drafts carry claims nobody checked.** A confident email cites a number nobody measured, or names a tool the business stopped using months ago.
-- **Agents do more than they were asked.** A reviewer with write access "fixes" the thing it was asked to judge. A third-party skill can carry instructions that take over the assistant's tools.
-- **One context tries to hold every job.** Outbound sales playbooks and video production notes crowd out the rules that matter for client work.
-- **Two coding agents read two copies of the instructions.** The project is opened in both Claude Code and Codex, and hand-kept copies disagree within a week.
-- **Scheduled reports become noise.** A job that messages every day trains everyone to ignore the day it matters.
-
-Each of these was learned in production. Each answer here is a structure or a tested script, not a sentence asking the model to be more careful.
+Most of what's here exists because something went wrong once. A memory file grew past the loader's line limit and the oldest rules stopped loading for nine days. A draft went out with a link that had a full stop glued to the end. A session claimed it had used the design system and had not opened a single file from it. Each time the fix was a script that fails loudly, plus a test that replays the original failure. Longer instructions did not hold.
 
 ## How it fits together
 
-```
-                               Owner
-                       (one folder, one chat)
-                                 |
-                                 v
-  +--------------------------------------------------------------+
-  |  Main assistant ("Charlie"), this repo                       |
-  |  clients, delivery, finances, strategy, the vault            |
-  |                                                              |
-  |  sub-agents, each with a tool allow-list in front matter:    |
-  |    adversarial-reviewer      read-only, plus web lookups     |
-  |    skill-security-verifier   read-only, no network           |
-  |    plain-reader              read-only                       |
-  |    research-agent            web, writes reports only        |
-  +--------------------------------------------------------------+
-          |                       |                       |
-   /handoff outbound       /handoff media        guards/sync_codex.py
-          |                       |                       |
-          v                       v                       v
-  +-----------------+    +-----------------+    AGENTS.md, .codex/, .agents/
-  | outbound        |    | media           |    (one-way mirror for Codex)
-  | operator        |    | operator        |
-  | own repo,       |    | own repo,       |
-  | own CLAUDE.md,  |    | own CLAUDE.md,  |
-  | own memory      |    | own memory      |
-  +-----------------+    +-----------------+
-   Operators draft. Sending, publishing, pushing and deleting are
-   denied on the hand-off channel, so the owner activates anything
-   that goes out.
+```mermaid
+flowchart TD
+    owner([Owner, one folder, one chat])
+    main[Main assistant<br/>clients, delivery, books, the vault]
+    owner --> main
 
-  Markdown vault (vault/)
-    every note carries canonical front matter
-    lint_frontmatter.py checks it, build_home.py generates HOME.md
+    subgraph agents[Sub-agents, allow-lists in front matter]
+        rev[adversarial-reviewer<br/>owner-reviewer<br/>plain-reader]
+        sec[skill-security-verifier<br/>Read, Grep, Glob only]
+        res[research-agent]
+        mtg[meeting-notes<br/>4 named recorder tools]
+        led[ledger-reader<br/>Bash behind a command hook]
+    end
+    main --> agents
 
-  Local cron --> jobs/run_job.py --> a guard's output --> a phone message
-                                     empty output = no message
-                                     a crash always sends one
+    main -- /handoff --> outbound[Outbound operator<br/>own repo, own memory]
+    main -- /handoff --> media[Media operator<br/>own repo, own memory]
+
+    main --> vault[(Markdown vault<br/>front matter, generated HOME.md)]
+    main -. sync_codex.py .-> codex[AGENTS.md, .codex/, .agents/<br/>one-way mirror for Codex]
+
+    subgraph hooks[Hooks]
+        h1[SessionStart: context budget]
+        h2[PostToolUse: design system check, mirror sync]
+        h3[PreToolUse: per-agent command guard]
+        h4[git pre-commit: secret scan]
+    end
+    main --- hooks
+
+    cron[Local cron] --> runjob[jobs/run_job.py] --> phone([Message to the owner<br/>only when output is non-empty])
 ```
 
-## What is in the repo
+Operators draft. Sending, publishing, pushing and deleting are denied on the hand-off channel, so the owner is the one who activates anything that goes out.
 
-```
-CLAUDE.md                      main assistant instructions (short on purpose)
-.claude/
-  settings.json                permission denies + hooks (budget check, mirror sync)
-  agents/<name>/agent.md       four sub-agents with least-privilege tool lists
-  rules/                       writing style, working principles, operators and approvals
-  commands/handoff.md          the /handoff slash command
-  skills/weekly-reset/         the Monday priorities reset
-AGENTS.md, .codex/, .agents/   generated Codex mirror (never edited by hand)
-guards/
-  copy_check.py                lints outgoing drafts       (rules in copy_rules.json)
-  check_context_budget.py      measures always-loaded files (budgets in budget.json)
-  lint_frontmatter.py          checks vault front matter    (schema in vault_schema.json)
-  build_home.py                generates the vault home page
-  sync_codex.py                regenerates the Codex mirror
-  frontmatter.py               small dependency-free front matter reader
-operators/
-  handoff.py, operators.json   runs a task headless in another operator's repo
-jobs/
-  run_job.py, jobs.json        scheduled jobs that report only when it matters
-vault/                         fictional example vault (Example Co.)
-examples/                      drafts to run the copy linter against
-docs/
-  vault-schema.md              what the front matter fields mean
-  decay-ledger.md              how often each layer gets reviewed
-tests/                         pytest suite, offline
-```
+## Principles
 
-## Design principles
+I group the working rules under VAULT, an acronym I took from a public video by Nate Herk. The full text is in `.claude/rules/working-principles.md`.
 
-**Guards over guidance.** When a written rule fails once, writing a longer rule rarely fixes it. The fix is a check in the build that fails loudly, tested against the real failure. Banned words, banned punctuation, unproven numbers, malformed front matter and a drifting mirror are all caught by scripts here, not by hoping the model remembers.
+- Verify the output. A tidy answer is a draft until the parts that matter are checked, and a clean log only proves the thing ran.
+- Augment, don't replace. Known steps go to plain code; the model gets the messy input and the judgment calls.
+- Understand the why. One line before any build: the problem, and what a good result looks like.
+- Loop humans in. Drafts run freely. Anything that sends, spends, deploys or changes shared data waits for a yes.
+- Transparency. Every automation says what triggers it, what it reads, and where a person approves.
 
-**Restrict with permissions, never with a prompt that says "don't".** A prompt is a request; a permission is a wall. If an agent could do something, assume it eventually will. So every sub-agent declares a tool allow-list in its front matter, and the reviewers and the security verifier get no write or shell tools at all: a reviewer that cannot edit cannot "fix" what it was asked to judge, and a verifier with no network cannot be talked into sending a file anywhere, whatever the file under review tells it. The same idea runs through the rest of the system. Operators started by the main assistant run with a deny list on the hand-off channel. The project settings deny reading `.env` files and force pushes. The Codex mirror carries it across too: an agent with no write tools gets a read-only sandbox there. A test (`tests/test_agents.py`) fails the build if an agent drops its allow-list or a reviewer gains a write tool.
+The one I lean on most: restrict an agent with permissions, never with a prompt that says "don't". If an agent could do something, I assume it eventually will.
 
-**One source of truth, everything else generated.** A copy drifts. `CLAUDE.md` and `.claude/` are the only hand-edited instructions; the Codex side is regenerated from them. The home page is generated from front matter. The lint reads its schema from one JSON file, and the docs explain the schema without restating it. The copy linter reads its banned phrases from one config, so the rule and the check cannot disagree.
+## Agents
 
-**Separate operators, one folder for the owner.** Each large job (outbound, media) gets its own repo, instructions and memory, so its playbook never crowds the main context. The owner never changes directories: `/handoff` runs the operator headless in its own repo and relays the answer, and `--continue` picks up the same conversation when the operator has a question.
+Each agent lives in `.claude/agents/<name>/agent.md` with its tool list in front matter. `tests/test_agents.py` fails the build if an agent drops its list, a reviewer gains a write tool, an MCP grant covers a whole server, or an agent with Bash is missing its command guard.
 
-**Silent unless it matters.** A scheduled job's output is its message. No output, no message. A crash always sends one, because a silent failure looks exactly like a quiet week. Every run still leaves a line in a log.
-
-**Plain code for known answers, the model for judgment.** Known steps with known answers go to scripts, cron and spreadsheets. The model reads messy input and makes the calls a script cannot. "This does not need AI" is a valid recommendation.
-
-**Draft, don't send.** Nothing goes to a client or the public without the owner's yes on that specific message. Oversight matches consequence: internal drafts just run, anything that sends, spends, deploys or changes shared data waits for approval.
-
-**Every layer has a review clock.** Priorities go stale in a week, rules in months, and instructions written for one model become dead weight when the next model no longer needs them. `docs/decay-ledger.md` gives each layer its own clock, including a model-fit pass on every switch of the default model.
-
-The working principles are grouped under the acronym VAULT (Verify, Augment, Understand, Loop humans in, Transparency); the acronym comes from a public video by Nate Herk. The full text is in `.claude/rules/working-principles.md`.
-
-## The guards
-
-| Script | What it stops | How |
+| Agent | Tools | Why that list |
 |---|---|---|
-| `copy_check.py` | Drafts with banned phrases, em or en dashes, retired tools, or numbers nobody measured | FAIL for rules with one right answer; VERIFY for any number with a unit that is not in a proof file. Profiles for emails, proposals and HTML pages |
-| `check_context_budget.py` | Always-loaded files growing past the point where the loader cuts them | Measures each layer against its limit. Silent below the warning line; a short block at session start or a phone message above it |
-| `lint_frontmatter.py` | Notes that drop off the home page or point at notes that do not exist | Required fields, allowed types and statuses, ISO dates, list tags, broken wikilinks, stale active notes |
-| `build_home.py` | A hand-kept index that drifts | Rebuilds the blocks between AUTO markers from front matter; `--check` fails if the page is out of date |
-| `sync_codex.py` | Two coding agents reading two different sets of instructions | Regenerates `AGENTS.md`, Codex agent files and skills from the Claude side; `--check` fails on drift; carries read-only agents across as a read-only sandbox |
+| adversarial-reviewer | Read, Grep, Glob, WebSearch, WebFetch | A reviewer that can edit will "fix" what it was asked to judge |
+| owner-reviewer | Read, Grep, Glob, WebSearch, WebFetch | Same, reading as a clinic owner |
+| plain-reader | Read, Grep, Glob | Reads a finished build as the person who has to use it |
+| skill-security-verifier | Read, Grep, Glob | Vets third-party skills; with no network it can't be talked into sending anything |
+| research-agent | Read, Grep, Glob, WebSearch, WebFetch, Write | Writes its report to the vault, has no shell |
+| meeting-notes | Read, Write, Edit, Grep, Glob, four recorder tools | Named tools only, no shell |
+| ledger-reader | Bash | A PreToolUse hook allows three read commands of `tools/ledger.py` and blocks pipes, redirects and chaining |
 
-Try them:
+Front matter can grant Bash or withhold it, with nothing in between. The ledger-reader is how I got the in-between: Bash plus `guards/guard_agent_bash.py` wired as a hook in the agent's own file. Codex can't run Claude hooks, so `sync_codex.py` gives that agent a read-only sandbox on the Codex side instead.
 
-```
-python3 guards/copy_check.py examples/bad-email.txt --profile email
-python3 guards/copy_check.py examples/proposal.txt --profile proposal
-python3 guards/check_context_budget.py
-python3 guards/lint_frontmatter.py
-python3 guards/build_home.py --check
-python3 guards/sync_codex.py --check
-python3 jobs/run_job.py --crontab
-python3 operators/handoff.py outbound --dry-run "draft three openers for the new list"
-```
+Skills in `.claude/skills/`: `weekly-reset`, `call-topics`, `client-update`, `proposal`, `session-handoff`. The last one checks who is reading before it uses its template. I added that line after it handed me a wall of shell ids when I'd asked for a summary for myself.
 
-## Running the tests
+## Guards
 
-The scripts use only the Python standard library (3.11 or newer). The tests need pytest and run offline.
+Everything below runs on the standard library. The failure column is what happened before the guard existed.
+
+| Script | The failure it was written after |
+|---|---|
+| `guards/copy_check.py` | Drafts going out with banned phrases, em dashes, a number nobody measured, a link with trailing punctuation, or a 148-word reply to a two-line question. It also fails contact details in marketplace proposals, and `--profile` is required because a missing flag once ran a video description through the proposal rules |
+| `guards/check_context_budget.py` | The memory index passed its line limit and the tail stopped loading. It now also flags memory files no index links to, priorities bullets that have turned into diaries, and an overdue decay ledger review |
+| `guards/priorities_trim_check.py` | A weekly trim dropped four open items along with the history. It lists ticket ids, file pointers, emails, amounts and links that only the archive copy still has |
+| `guards/check_design_system.py` | A page claimed the design system and carried none of it, then a private page opted itself out with a reason it wrote for itself. Opt-outs now have to name a category from a fixed list |
+| `guards/guard_agent_bash.py` | Nothing yet, and I want to keep it that way: an agent that reads the books could otherwise copy them anywhere its shell reaches |
+| `guards/guard_secret_commit.py` | Covers the paths `.env` deny rules don't: a key pasted into a note, a balance printed into a log. On its first run it blocked my own commit, because its docstring held a sample account line |
+| `guards/lint_frontmatter.py`, `build_home.py` | Notes falling off the home page, and a hand-kept index drifting |
+| `guards/sync_codex.py` | Claude Code and Codex reading two copies of the instructions that disagreed within a week |
+
+Two small tools sit in `tools/`. `add_key.py` takes a secret through a macOS password dialog and writes it to `.env`, so the value never passes through the chat. `open_checklist.py` turns steps I have to do by hand into a page with tick boxes and Copy buttons, because a numbered list in the chat scrolls away while I'm clicking through a console.
+
+Scheduled jobs go through `jobs/run_job.py`. A job's stdout is the message: empty output sends nothing, and a crash always sends one.
+
+## Running it
+
+Python 3.11 or newer. The tests need pytest and run offline.
 
 ```
 python3 -m pip install pytest
 python3 -m pytest
+python3 guards/guard_secret_commit.py --install   # git doesn't version hooks
 ```
 
-The suite unit-tests every guard and the job and hand-off runners, then runs the repo against its own guards end to end: no em or en dashes anywhere, a clean example vault, a current home page, a current Codex mirror, and the example drafts passing or failing as they should.
+Some things to try:
+
+```
+python3 guards/copy_check.py examples/bad-email.txt --profile email --offline
+python3 guards/copy_check.py examples/proposal.txt --profile proposal --type cold
+python3 guards/check_context_budget.py
+python3 guards/sync_codex.py --check
+python3 tools/ledger.py find northside
+echo '{"tool_input":{"command":"python3 tools/ledger.py summary > out.txt"}}' | python3 guards/guard_agent_bash.py ledger-reader
+```
+
+The suite also runs the repo against its own guards: no em dashes anywhere, a clean example vault, a current home page and a current Codex mirror.
+
+## Limitations
+
+- The guards are pattern matchers. `copy_check.py` can tell you a number isn't in the proof file; it can't tell you the claim is persuasive or that the right proof was picked. That still needs a reviewer agent and then me.
+- `add_key.py` is macOS only.
+- `guard_agent_bash.py` matches whole command strings. It's strict on purpose, which means every new read command needs a new pattern in `agent_commands.json`.
+- The design system guard only judges new files. Pages already committed are left alone, otherwise every edit to an old page would turn into a migration and the guard would get switched off.
+- The operators' own repos (outbound and media) aren't here, only the hand-off side.
+- How Charlie writes in chat lives in a separate mod, [claude-code-voice-mod](https://github.com/alecstephens3-stack/claude-code-voice-mod).
 
 ## License
 

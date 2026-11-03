@@ -6,6 +6,6 @@ __pycache__/
 venv/
 jobs/runs.log
 AGENTS.override.md
-CLAUDE.local.md
+*.local.md
 .claude/settings.local.json
 artifacts/checklists/
